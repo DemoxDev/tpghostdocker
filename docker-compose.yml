@@ -17,7 +17,7 @@ services:
       - ghost-network
 
   db:
-    image: mysql:5.7
+    image: alpine/mysql:latest
     container_name: ghost-mysql
     restart: always
     environment:
