@@ -12,6 +12,10 @@ services:
       database__connection__database: ghostdb
       database__connection__user: ghost
       database__connection__password: ghostpass
+      mail__transport: SMTP
+      mail__options__host: mailhog
+      mail__options__port: 1025
+      mail__options__secureConnection: false
     volumes:
       - ghost_content:/var/lib/ghost/content
     depends_on:
@@ -39,6 +43,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    platform: linux/amd64
+    container_name: ghost-phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: db
+      PMA_USER: ghost
+      PMA_PASSWORD: ghostpass
+    networks:
+      - ghost-network
+
+  mailhog:
+    image: mailhog/mailhog
+    platform: linux/amd64
+    container_name: ghost-mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - ghost-network
 
 volumes:
   ghost_content:
