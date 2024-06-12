@@ -1,13 +1,25 @@
-# environnement dev
+version: "3.8"
+
 services:
   ghost:
     image: ghost:latest
-    container_name: ghost
-    restart: always
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - "node.role == worker"
     ports:
-      - 2368:2368
+      - target: 2368
+        published: 80
+        protocol: tcp
+        mode: host
     environment:
-      url: http://localhost:2368
+      url: "http://localghost.sigma"
       database__client: mysql
       database__connection__host: db
       database__connection__database: ghostdb
@@ -16,7 +28,7 @@ services:
       mail__transport: SMTP
       mail__options__host: mailhog
       mail__options__port: 1025
-      mail__options__secureConnection: false
+      mail__options__secureConnection: "false"
     volumes:
       - ghost_content:/var/lib/ghost/content
     depends_on:
@@ -26,32 +38,38 @@ services:
 
   db:
     image: mysql:5.7
-    platform: linux/amd64
-    container_name: ghost-mysql
-    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - "node.role == manager"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ghost-network
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: ghostdb
       MYSQL_USER: ghost
       MYSQL_PASSWORD: ghostpass
-      innodb_force_recovery: 1
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - ghost-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    platform: linux/amd64
-    container_name: ghost-phpmyadmin
-    restart: always
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - "node.role == manager" # Deploy phpMyAdmin on the manager node as well
     ports:
-      - 8080:80
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: host
     environment:
       PMA_HOST: db
       PMA_USER: ghost
@@ -61,11 +79,22 @@ services:
 
   mailhog:
     image: mailhog/mailhog
-    platform: linux/amd64
-    container_name: ghost-mailhog
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - "node.role == manager"
     ports:
-      - 1025:1025
-      - 8025:8025
+      - target: 1025
+        published: 1025
+        protocol: tcp
+        mode: host
+      - target: 8025
+        published: 8025
+        protocol: tcp
+        mode: host
     networks:
       - ghost-network
 
@@ -75,4 +104,4 @@ volumes:
 
 networks:
   ghost-network:
-    driver: bridge
+    driver: overlay # Overlay network for Swarm

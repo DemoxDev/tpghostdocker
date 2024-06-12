@@ -15,5 +15,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and run Docker containers
-        run: docker-compose up -d
+      - name: Deploy to Swarm
+        run: docker stack deploy -c docker-compose.yml blog

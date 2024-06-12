@@ -1,0 +1,6 @@
+services:
+  ghost:
+    ports:
+      - "3000:2368"
+    environment:
+      url: http://localhost:3000
