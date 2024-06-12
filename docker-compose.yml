@@ -1,3 +1,4 @@
+# environnement prod
 services:
   ghost:
     image: ghost:latest
