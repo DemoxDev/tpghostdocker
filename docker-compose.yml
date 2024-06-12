@@ -30,6 +30,10 @@ services:
     networks:
       - ghost-network
 
-  volumes:
-    ghost_content:
-    ghost-mysql_data:
+volumes:
+  ghost_content:
+  ghost-mysql_data:
+
+networks:
+  ghost-network:
+    driver: bridge
